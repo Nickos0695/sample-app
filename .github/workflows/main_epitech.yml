@@ -60,13 +60,13 @@ jobs:
           npm run production
 
       # Generate Laravel application key
-      - name: Generate application key
-        run: php artisan key:generate
-        env:
-          APP_ENV: production
-          APP_KEY: ${{ secrets.APP_KEY }}
-          APP_DEBUG: false
-          APP_URL: ${{ secrets.APP_URL }}
+      # - name: Generate application key
+      #   run: php artisan key:generate
+      #   env:
+      #     APP_ENV: production
+      #     APP_KEY: ${{ secrets.APP_KEY }}
+      #     APP_DEBUG: false
+      #     APP_URL: ${{ secrets.APP_URL }}
 
       # Zip the application for deployment
       - name: Prepare application for deployment
