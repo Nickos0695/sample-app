@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy PHP app to Azure Web App - epitech
+name: Build and deploy Laravel app to Azure Web App - epitech
 
 on:
   push:
@@ -14,30 +14,69 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # Setup PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: mbstring, bcmath, intl
+          ini-values: post_max_size=256M, upload_max_filesize=256M
+          tools: composer
 
-      - name: Check if composer.json exists
-        id: check_files
-        uses: andstor/file-existence-action@v1
+      # Cache Composer dependencies
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
         with:
-          files: 'composer.json'
+          path: vendor
+          key: composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-
 
-      - name: Run composer install if composer.json exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
+      # Install PHP dependencies
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress --no-scripts --optimize-autoloader
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+      # Setup Node.js (for Laravel Mix or other front-end dependencies)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-      - name: Upload artifact for deployment job
+      # Cache Node.js modules
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: node-modules-
+
+      # Install Node.js dependencies and build assets
+      - name: Install Node.js dependencies and build
+        run: |
+          npm install
+          npm run production
+
+      # Generate Laravel application key
+      - name: Generate application key
+        run: php artisan key:generate
+        env:
+          APP_ENV: production
+          APP_KEY: ${{ secrets.APP_KEY }}
+          APP_DEBUG: false
+          APP_URL: ${{ secrets.APP_URL }}
+
+      # Zip the application for deployment
+      - name: Prepare application for deployment
+        run: zip -r release.zip . -x "**/node_modules/**" "**/vendor/**" "**/storage/**" "**/tests/**"
+
+      # Upload artifact for deployment job
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: php-app
+          name: laravel-app
           path: release.zip
 
   deploy:
@@ -46,21 +85,39 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    
+
     steps:
-      - name: Download artifact from build job
+      # Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: php-app
+          name: laravel-app
 
-      - name: Unzip artifact for deployment
+      # Unzip the artifact
+      - name: Unzip artifact
         run: unzip release.zip
-      
-      - name: 'Deploy to Azure Web App'
+
+      # Deploy to Azure Web App
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'epitech'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_905A4F64708C4A67869241A012B95DCF }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+
+      # Run Laravel migrations
+      - name: Run migrations
+        run: php artisan migrate --force
+        env:
+          APP_ENV: production
+          APP_KEY: ${{ secrets.APP_KEY }}
+          APP_DEBUG: false
+          APP_URL: ${{ secrets.APP_URL }}
+          DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
