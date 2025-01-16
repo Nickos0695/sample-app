@@ -105,19 +105,19 @@ jobs:
           app-name: 'epitech'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_905A4F64708C4A67869241A012B95DCF }}
 
       # Run Laravel migrations
-      - name: Run migrations
-        run: php artisan migrate --force
-        env:
-          APP_ENV: production
-          APP_KEY: ${{ secrets.APP_KEY }}
-          APP_DEBUG: false
-          APP_URL: ${{ secrets.APP_URL }}
-          DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      # - name: Run migrations
+      #   run: php artisan migrate --force
+      #   env:
+      #     APP_ENV: production
+      #     APP_KEY: ${{ secrets.APP_KEY }}
+      #     APP_DEBUG: false
+      #     APP_URL: ${{ secrets.APP_URL }}
+      #     DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+      #     DB_HOST: ${{ secrets.DB_HOST }}
+      #     DB_PORT: ${{ secrets.DB_PORT }}
+      #     DB_DATABASE: ${{ secrets.DB_DATABASE }}
+      #     DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
